@@ -127,8 +127,13 @@ export function PropertyCard({ property, t, unlocked, onUnlock }: PropertyCardPr
         </div>
 
         {/* Price & CTA */}
-        <div className="flex items-center justify-between pt-3 border-t border-border">
-          <div>
+        <div
+          className={cn(
+            "flex justify-between gap-3 pt-3 border-t border-border",
+            unlocked ? "items-center" : "items-end"
+          )}
+        >
+          <div className={cn(!unlocked && "min-w-0 flex-1")}>
             {unlocked ? (
               <div>
                 <p className="text-xs text-muted-foreground">{property.fullAddress.split(",")[0]}</p>
@@ -137,15 +142,17 @@ export function PropertyCard({ property, t, unlocked, onUnlock }: PropertyCardPr
                 </p>
               </div>
             ) : (
-              <div>
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <Lock className="w-3 h-3" />
-                  <span className="text-xs">{t.lockedAddress}</span>
-                </div>
-                <div className="flex items-center gap-1 text-muted-foreground mt-0.5">
-                  <span className="text-sm font-medium blur-sm select-none">{property.blurredPrice}</span>
-                  <span className="text-xs text-muted-foreground not-italic">{t.perMonth}</span>
-                </div>
+              <div className="space-y-1">
+                <p className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                  <Lock className="size-3.5 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
+                  <span className="leading-snug">{t.lockedAddress}</span>
+                </p>
+                <p className="flex items-baseline gap-1.5">
+                  <span className="text-sm font-medium tabular-nums blur-sm select-none text-muted-foreground/80">
+                    {property.blurredPrice}
+                  </span>
+                  <span className="text-xs font-medium text-muted-foreground">{t.perMonth}</span>
+                </p>
               </div>
             )}
           </div>
@@ -165,10 +172,12 @@ export function PropertyCard({ property, t, unlocked, onUnlock }: PropertyCardPr
             <Button
               size="sm"
               onClick={() => onUnlock(property)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs gap-1.5 whitespace-nowrap"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold gap-2 px-3.5 shadow-sm whitespace-nowrap shrink-0 [&_svg]:size-3.5"
             >
-              <Unlock className="w-3.5 h-3.5" />
-              {t.unlockDetails} ({t.unlockCost})
+              <Unlock className="size-3.5" strokeWidth={2} aria-hidden />
+              <span className="leading-tight">
+                {t.unlockDetails} ({t.unlockCost})
+              </span>
             </Button>
           )}
         </div>
