@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Wallet, Globe, ChevronDown, Menu, X, Building2 } from "lucide-react"
+import { Search, Globe, ChevronDown, Menu, X, Building2 } from "lucide-react"
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -22,7 +23,6 @@ interface HeaderProps {
 }
 
 export function Header({ lang, t, onLangChange, activeView, onViewChange }: HeaderProps) {
-  const [walletConnected, setWalletConnected] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const currentLang = languages.find((l) => l.code === lang)
@@ -114,21 +114,9 @@ export function Header({ lang, t, onLangChange, activeView, onViewChange }: Head
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Button
-              size="sm"
-              onClick={() => setWalletConnected(!walletConnected)}
-              className={cn(
-                "gap-1.5 text-sm font-medium",
-                walletConnected
-                  ? "bg-accent text-accent-foreground hover:bg-accent/90"
-                  : "bg-primary text-primary-foreground hover:bg-primary/90"
-              )}
-            >
-              <Wallet className="w-4 h-4" />
-              <span className="hidden sm:inline">
-                {walletConnected ? "Bx3f...9kR2" : t.connectWallet}
-              </span>
-            </Button>
+            <div className="hidden sm:block shrink-0 [&_.wallet-adapter-button-trigger]:h-9">
+              <WalletMultiButton className="!rounded-md !bg-primary !text-primary-foreground !text-sm !font-medium !h-9 hover:!bg-primary/90" />
+            </div>
 
             {/* Mobile menu button */}
             <button
@@ -200,6 +188,9 @@ export function Header({ lang, t, onLangChange, activeView, onViewChange }: Head
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+          </div>
+          <div className="sm:hidden pt-2 border-t border-border mt-2">
+            <WalletMultiButton className="!w-full !justify-center !rounded-md !bg-primary !text-primary-foreground !text-sm !font-medium !h-10 hover:!bg-primary/90" />
           </div>
         </div>
       )}

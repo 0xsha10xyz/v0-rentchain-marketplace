@@ -1,11 +1,14 @@
 "use client"
 
 import { useState } from "react"
+import { useWallet } from "@solana/wallet-adapter-react"
+import { createX402Client } from "x402-solana/client"
 import { Wallet, CheckCircle2, Loader2, X, Shield, Zap, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { getOrCreateBrowserSessionId } from "@/lib/browser-session"
 import { type Translations } from "@/lib/i18n"
 import { type Property, formatPrice } from "@/lib/properties"
+import { getX402ClientNetwork } from "@/lib/x402/browser-network"
 
 interface PaymentModalProps {
   property: Property | null
@@ -19,6 +22,7 @@ type ModalStep = "confirm" | "processing" | "success" | "error"
 export function PaymentModal({ property, t, onClose, onSuccess }: PaymentModalProps) {
   const [step, setStep] = useState<ModalStep>("confirm")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const wallet = useWallet()
 
   if (!property) return null
 
@@ -26,17 +30,42 @@ export function PaymentModal({ property, t, onClose, onSuccess }: PaymentModalPr
     setErrorMessage(null)
     setStep("processing")
     try {
-      // Simulate chain confirmation latency before persisting the unlock server-side.
-      await new Promise((resolve) => setTimeout(resolve, 2200))
       const sessionId = getOrCreateBrowserSessionId()
       if (!sessionId) {
         throw new Error(t.sessionUnavailable)
       }
-      const res = await fetch("/api/unlocks", {
+
+      const url = `${window.location.origin}/api/payments/unlock`
+      const init: RequestInit = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ propertyId: property.id, sessionId }),
-      })
+      }
+
+      const walletReady =
+        wallet.connected &&
+        wallet.publicKey &&
+        typeof wallet.signTransaction === "function"
+
+      let res: Response
+      if (walletReady) {
+        const client = createX402Client({
+          wallet: {
+            address: wallet.publicKey!.toBase58(),
+            signTransaction: async (tx) => wallet.signTransaction!(tx),
+          },
+          network: getX402ClientNetwork(),
+          amount: BigInt(500_000),
+        })
+        res = await client.fetch(url, init)
+      } else {
+        res = await fetch(url, init)
+      }
+
+      if (res.status === 402) {
+        throw new Error(t.connectWallet)
+      }
+
       const payload: unknown = await res.json().catch(() => null)
       if (!res.ok) {
         const message =
@@ -51,6 +80,7 @@ export function PaymentModal({ property, t, onClose, onSuccess }: PaymentModalPr
             : t.paymentUnlockServerError
         throw new Error(message)
       }
+
       setStep("success")
       onSuccess(property.id)
     } catch (e) {
