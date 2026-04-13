@@ -7,10 +7,18 @@ import { WalletModalProvider } from "@solana/wallet-adapter-react-ui"
 import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets"
 import { clusterApiUrl } from "@solana/web3.js"
 
+import { normalizeHttpRpcUrl } from "@/lib/solana-endpoint"
+
 import "@solana/wallet-adapter-react-ui/styles.css"
 
 interface SolanaProvidersProps {
   children: ReactNode
+}
+
+function resolveWalletAdapterEndpoint(network: WalletAdapterNetwork): string {
+  const normalized = normalizeHttpRpcUrl(process.env.NEXT_PUBLIC_SOLANA_RPC_URL)
+  if (normalized) return normalized
+  return clusterApiUrl(network === WalletAdapterNetwork.Mainnet ? "mainnet-beta" : "devnet")
 }
 
 export function SolanaProviders({ children }: SolanaProvidersProps) {
@@ -21,11 +29,7 @@ export function SolanaProviders({ children }: SolanaProvidersProps) {
       : WalletAdapterNetwork.Devnet
   }, [])
 
-  const endpoint = useMemo(() => {
-    const custom = process.env.NEXT_PUBLIC_SOLANA_RPC_URL?.trim()
-    if (custom) return custom
-    return clusterApiUrl(network === WalletAdapterNetwork.Mainnet ? "mainnet-beta" : "devnet")
-  }, [network])
+  const endpoint = useMemo(() => resolveWalletAdapterEndpoint(network), [network])
 
   const wallets = useMemo(
     () => [new PhantomWalletAdapter(), new SolflareWalletAdapter()],

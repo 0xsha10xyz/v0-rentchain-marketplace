@@ -1,3 +1,5 @@
+import { normalizeHttpRpcUrl } from "@/lib/solana-endpoint"
+
 /**
  * Central x402 (HTTP 402 + USDC on Solana) configuration.
  *
@@ -59,7 +61,9 @@ export function getX402AppConfig(): X402AppConfig {
     network,
     treasuryAddress: treasury,
     facilitatorUrl: trimEnv("X402_FACILITATOR_URL") ?? "https://facilitator.payai.network",
-    rpcUrl: trimEnv("NEXT_PUBLIC_SOLANA_RPC_URL") ?? trimEnv("SOLANA_RPC_URL"),
+    rpcUrl:
+      normalizeHttpRpcUrl(trimEnv("NEXT_PUBLIC_SOLANA_RPC_URL")) ??
+      normalizeHttpRpcUrl(trimEnv("SOLANA_RPC_URL")),
     appBaseUrl: resolveBaseUrl().replace(/\/$/, ""),
     usdcMint: trimEnv("NEXT_PUBLIC_USDC_MINT") ?? (network === "solana" ? USDC_MAINNET : USDC_DEVNET),
     unlockPriceAtomic: trimEnv("X402_UNLOCK_PRICE_ATOMIC") ?? UNLOCK_PRICE_ATOMIC,

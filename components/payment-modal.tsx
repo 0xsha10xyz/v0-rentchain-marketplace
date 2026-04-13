@@ -9,6 +9,7 @@ import { getOrCreateBrowserSessionId } from "@/lib/browser-session"
 import { type Translations } from "@/lib/i18n"
 import { type Property, formatPrice } from "@/lib/properties"
 import { getX402ClientNetwork } from "@/lib/x402/browser-network"
+import { UNLOCK_PRICE_ATOMIC } from "@/lib/x402/config"
 
 interface PaymentModalProps {
   property: Property | null
@@ -55,7 +56,9 @@ export function PaymentModal({ property, t, onClose, onSuccess }: PaymentModalPr
             signTransaction: async (tx) => wallet.signTransaction!(tx),
           },
           network: getX402ClientNetwork(),
-          amount: BigInt(500_000),
+          amount: BigInt(
+            process.env.NEXT_PUBLIC_X402_UNLOCK_PRICE_ATOMIC?.trim() || UNLOCK_PRICE_ATOMIC
+          ),
         })
         res = await client.fetch(url, init)
       } else {
