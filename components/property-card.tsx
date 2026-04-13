@@ -18,15 +18,27 @@ const facilityIcons: Record<string, React.ReactNode> = {
   gym: <Dumbbell className="w-3 h-3" />,
 }
 
-const facilityLabels: Record<string, string> = {
-  wifi: "WiFi",
-  parking: "Parking",
-  ac: "AC",
-  kitchen: "Kitchen",
-  laundry: "Laundry",
-  security: "Security",
-  pool: "Pool",
-  gym: "Gym",
+function facilityLabel(t: Translations, key: string): string {
+  switch (key) {
+    case "wifi":
+      return t.wifi
+    case "parking":
+      return t.parking
+    case "ac":
+      return t.ac
+    case "kitchen":
+      return t.kitchen
+    case "laundry":
+      return t.laundry
+    case "security":
+      return t.security
+    case "pool":
+      return t.pool
+    case "gym":
+      return t.gym
+    default:
+      return key
+  }
 }
 
 const typeBadgeColors: Record<string, string> = {
@@ -104,7 +116,7 @@ export function PropertyCard({ property, t, unlocked, onUnlock }: PropertyCardPr
           {property.facilities.slice(0, 4).map((f) => (
             <span key={f} className="inline-flex items-center gap-1 bg-secondary text-muted-foreground px-2 py-0.5 rounded-md text-xs">
               {facilityIcons[f]}
-              {facilityLabels[f]}
+              {facilityLabel(t, f)}
             </span>
           ))}
           {property.facilities.length > 4 && (
@@ -146,7 +158,7 @@ export function PropertyCard({ property, t, unlocked, onUnlock }: PropertyCardPr
             >
               <Button size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground text-xs gap-1.5">
                 <MessageCircle className="w-3.5 h-3.5" />
-                WhatsApp
+                {t.whatsAppCta}
               </Button>
             </a>
           ) : (

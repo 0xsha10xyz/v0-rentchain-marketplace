@@ -1,20 +1,41 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Header } from "@/components/header"
 import { HeroSection } from "@/components/hero-section"
 import { DiscoveryPage } from "@/components/discovery-page"
 import { LandlordPortal } from "@/components/landlord-portal"
 import { Footer } from "@/components/footer"
 import { type Language, getTranslation } from "@/lib/i18n"
+import {
+  detectBrowserLanguage,
+  readStoredLanguage,
+  writeStoredLanguage,
+} from "@/lib/language-preference"
 
 type View = "home" | "discover" | "post"
 
 export default function RentChainApp() {
   const [lang, setLang] = useState<Language>("id")
+  const [languageReady, setLanguageReady] = useState(false)
   const [view, setView] = useState<View>("home")
 
   const t = getTranslation(lang)
+
+  useEffect(() => {
+    setLang(readStoredLanguage() ?? detectBrowserLanguage())
+    setLanguageReady(true)
+  }, [])
+
+  useEffect(() => {
+    if (!languageReady) return
+    writeStoredLanguage(lang)
+    document.documentElement.lang = lang
+  }, [lang, languageReady])
+
+  const handleLangChange = (next: Language) => {
+    setLang(next)
+  }
 
   const handleViewChange = (newView: "home" | "discover" | "post") => {
     setView(newView)
@@ -26,7 +47,7 @@ export default function RentChainApp() {
       <Header
         lang={lang}
         t={t}
-        onLangChange={setLang}
+        onLangChange={handleLangChange}
         activeView={view}
         onViewChange={handleViewChange}
       />
@@ -39,14 +60,14 @@ export default function RentChainApp() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <h2 className="text-xl font-bold text-foreground">Properti Unggulan</h2>
-                  <p className="text-sm text-muted-foreground mt-0.5">Temukan properti terbaik di seluruh Indonesia</p>
+                  <h2 className="text-xl font-bold text-foreground">{t.featuredTitle}</h2>
+                  <p className="text-sm text-muted-foreground mt-0.5">{t.featuredSubtitle}</p>
                 </div>
                 <button
                   onClick={() => handleViewChange("discover")}
                   className="text-sm text-primary font-medium hover:underline"
                 >
-                  Lihat Semua &rarr;
+                  {t.viewAll} &rarr;
                 </button>
               </div>
               <DiscoveryPage t={t} />

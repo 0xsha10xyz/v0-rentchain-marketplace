@@ -168,14 +168,14 @@ export function DiscoveryPage({ t }: DiscoveryPageProps) {
         <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">{t.size}</p>
         <div className="flex gap-2">
           <Input
-            placeholder="Min"
+            placeholder={t.placeholderMin}
             value={minSize}
             onChange={(e) => setMinSize(e.target.value)}
             type="number"
             className="text-sm h-9"
           />
           <Input
-            placeholder="Max"
+            placeholder={t.placeholderMax}
             value={maxSize}
             onChange={(e) => setMaxSize(e.target.value)}
             type="number"
@@ -256,7 +256,8 @@ export function DiscoveryPage({ t }: DiscoveryPageProps) {
               <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" aria-hidden />
             ) : null}
             <span>
-              <span className="font-semibold text-foreground">{loading ? "…" : total}</span> properties found
+              <span className="font-semibold text-foreground">{loading ? "…" : total}</span>{" "}
+              {t.propertiesFound}
             </span>
           </p>
         </div>
@@ -310,10 +311,10 @@ export function DiscoveryPage({ t }: DiscoveryPageProps) {
         <div className="flex-1">
           {error ? (
             <div className="flex flex-col items-center justify-center py-20 text-center px-4">
-              <p className="font-semibold text-foreground">Could not load listings</p>
+              <p className="font-semibold text-foreground">{t.loadListingsError}</p>
               <p className="text-sm text-muted-foreground mt-1 max-w-md">{error}</p>
               <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-4">
-                Retry
+                {t.retry}
               </Button>
             </div>
           ) : loading && properties.length === 0 ? (
@@ -334,8 +335,8 @@ export function DiscoveryPage({ t }: DiscoveryPageProps) {
               <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
                 <SlidersHorizontal className="w-7 h-7 text-muted-foreground" />
               </div>
-              <p className="font-semibold text-foreground">No properties found</p>
-              <p className="text-sm text-muted-foreground mt-1">Try adjusting your filters</p>
+              <p className="font-semibold text-foreground">{t.noPropertiesTitle}</p>
+              <p className="text-sm text-muted-foreground mt-1">{t.noPropertiesHint}</p>
               <Button variant="outline" size="sm" onClick={resetFilters} className="mt-4">
                 {t.reset}
               </Button>

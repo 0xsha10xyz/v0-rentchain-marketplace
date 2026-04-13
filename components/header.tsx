@@ -83,22 +83,32 @@ export function Header({ lang, t, onLangChange, activeView, onViewChange }: Head
           <div className="flex items-center gap-2 ml-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="hidden sm:flex items-center gap-1 text-sm px-2">
-                  <Globe className="w-4 h-4" />
-                  <span className="hidden lg:inline">{currentLang?.flag} {currentLang?.label}</span>
-                  <span className="lg:hidden">{currentLang?.flag}</span>
-                  <ChevronDown className="w-3 h-3 opacity-60" />
+                <Button variant="ghost" size="sm" className="hidden sm:flex items-center gap-1.5 text-sm px-2.5">
+                  <Globe className="w-4 h-4 shrink-0" />
+                  <span className="hidden lg:inline tabular-nums">
+                    <span className="text-muted-foreground text-xs mr-1.5">{currentLang?.region}</span>
+                    <span className="font-medium">{currentLang?.label}</span>
+                  </span>
+                  <span className="lg:hidden text-xs text-muted-foreground">{currentLang?.region}</span>
+                  <ChevronDown className="w-3 h-3 opacity-60 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuContent align="end" className="min-w-[13.5rem] rounded-xl border-border bg-card p-1 shadow-lg">
                 {languages.map((l) => (
                   <DropdownMenuItem
                     key={l.code}
                     onClick={() => onLangChange(l.code)}
-                    className={cn("cursor-pointer", lang === l.code && "font-semibold text-primary")}
+                    className={cn(
+                      "cursor-pointer rounded-lg px-3 py-2.5 focus:bg-secondary",
+                      lang === l.code && "font-bold text-primary bg-primary/5"
+                    )}
                   >
-                    <span className="mr-2">{l.flag}</span>
-                    {l.label}
+                    <span className="flex w-full items-center justify-between gap-6">
+                      <span className="text-xs text-muted-foreground tabular-nums w-7 shrink-0">{l.region}</span>
+                      <span className={cn("flex-1 text-left text-sm", lang === l.code && "font-bold text-primary")}>
+                        {l.label}
+                      </span>
+                    </span>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -159,23 +169,33 @@ export function Header({ lang, t, onLangChange, activeView, onViewChange }: Head
           <div className="pt-1">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-1 text-sm w-full justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <Globe className="w-4 h-4" />
-                    {currentLang?.flag} {currentLang?.label}
+                <Button variant="outline" size="sm" className="gap-2 text-sm w-full justify-between">
+                  <span className="flex items-center gap-2 min-w-0">
+                    <Globe className="w-4 h-4 shrink-0" />
+                    <span className="tabular-nums truncate">
+                      <span className="text-muted-foreground text-xs mr-1">{currentLang?.region}</span>
+                      <span className="font-medium">{currentLang?.label}</span>
+                    </span>
                   </span>
-                  <ChevronDown className="w-3 h-3 opacity-60" />
+                  <ChevronDown className="w-3 h-3 opacity-60 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-44">
+              <DropdownMenuContent align="start" className="min-w-[13.5rem] rounded-xl border-border bg-card p-1 shadow-lg">
                 {languages.map((l) => (
                   <DropdownMenuItem
                     key={l.code}
                     onClick={() => onLangChange(l.code)}
-                    className={cn("cursor-pointer", lang === l.code && "font-semibold text-primary")}
+                    className={cn(
+                      "cursor-pointer rounded-lg px-3 py-2.5 focus:bg-secondary",
+                      lang === l.code && "font-bold text-primary bg-primary/5"
+                    )}
                   >
-                    <span className="mr-2">{l.flag}</span>
-                    {l.label}
+                    <span className="flex w-full items-center justify-between gap-6">
+                      <span className="text-xs text-muted-foreground tabular-nums w-7 shrink-0">{l.region}</span>
+                      <span className={cn("flex-1 text-left text-sm", lang === l.code && "font-bold text-primary")}>
+                        {l.label}
+                      </span>
+                    </span>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>

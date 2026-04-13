@@ -1,12 +1,20 @@
 export type Language = "id" | "en" | "zh" | "ja" | "ru" | "pt"
 
-export const languages: { code: Language; label: string; flag: string }[] = [
-  { code: "id", label: "Indonesia", flag: "🇮🇩" },
-  { code: "en", label: "English", flag: "🇺🇸" },
-  { code: "zh", label: "中文", flag: "🇨🇳" },
-  { code: "ja", label: "日本語", flag: "🇯🇵" },
-  { code: "ru", label: "Русский", flag: "🇷🇺" },
-  { code: "pt", label: "Português", flag: "🇧🇷" },
+export interface LanguageOption {
+  code: Language
+  /** Region / market tag shown in the language menu (e.g. US, ID). */
+  region: string
+  label: string
+  flag: string
+}
+
+export const languages: LanguageOption[] = [
+  { code: "id", region: "ID", label: "Indonesia", flag: "🇮🇩" },
+  { code: "en", region: "US", label: "English", flag: "🇺🇸" },
+  { code: "zh", region: "CN", label: "中文", flag: "🇨🇳" },
+  { code: "ja", region: "JP", label: "日本語", flag: "🇯🇵" },
+  { code: "ru", region: "RU", label: "Русский", flag: "🇷🇺" },
+  { code: "pt", region: "BR", label: "Português", flag: "🇧🇷" },
 ]
 
 export type Translations = {
@@ -83,6 +91,34 @@ export type Translations = {
   security: string
   pool: string
   gym: string
+  // Home — featured strip
+  featuredTitle: string
+  featuredSubtitle: string
+  viewAll: string
+  // Discovery — listing chrome
+  propertiesFound: string
+  loadListingsError: string
+  retry: string
+  noPropertiesTitle: string
+  noPropertiesHint: string
+  placeholderMin: string
+  placeholderMax: string
+  // Property card
+  whatsAppCta: string
+  // Payment — extra strings
+  paymentProcessing: string
+  paymentProcessingHint: string
+  paymentFullAddress: string
+  paymentExactPrice: string
+  paymentProtocol: string
+  paymentProtocolValue: string
+  paymentUnlockFailed: string
+  paymentTryAgain: string
+  sessionUnavailable: string
+  paymentUnknownError: string
+  paymentUnlockServerError: string
+  paymentInstantNote: string
+  paymentErrorHint: string
 }
 
 const translations: Record<Language, Translations> = {
@@ -153,6 +189,31 @@ const translations: Record<Language, Translations> = {
     security: "Keamanan 24 Jam",
     pool: "Kolam Renang",
     gym: "Gym",
+    featuredTitle: "Properti Unggulan",
+    featuredSubtitle: "Temukan properti terbaik di seluruh Indonesia",
+    viewAll: "Lihat Semua",
+    propertiesFound: "properti ditemukan",
+    loadListingsError: "Tidak dapat memuat daftar",
+    retry: "Coba lagi",
+    noPropertiesTitle: "Tidak ada properti",
+    noPropertiesHint: "Coba ubah filter Anda",
+    placeholderMin: "Min",
+    placeholderMax: "Maks",
+    whatsAppCta: "WhatsApp",
+    paymentProcessing: "Memproses di Solana...",
+    paymentProcessingHint: "Mengonfirmasi mikrobayar X402",
+    paymentFullAddress: "Alamat lengkap:",
+    paymentExactPrice: "Harga pasti:",
+    paymentProtocol: "Protokol",
+    paymentProtocolValue: "X402 Pay-per-Click",
+    paymentUnlockFailed: "Gagal membuka kunci",
+    paymentTryAgain: "Coba lagi",
+    sessionUnavailable: "Sesi tidak tersedia — coba lagi di peramban.",
+    paymentUnknownError: "Terjadi kesalahan",
+    paymentUnlockServerError: "Tidak dapat mengonfirmasi pembukaan kunci",
+    paymentInstantNote:
+      "Transaksi diproses instan di Solana dengan biaya sangat rendah melalui protokol X402.",
+    paymentErrorHint: "Silakan coba lagi.",
   },
   en: {
     connectWallet: "Connect Wallet",
@@ -221,6 +282,31 @@ const translations: Record<Language, Translations> = {
     security: "24h Security",
     pool: "Swimming Pool",
     gym: "Gym",
+    featuredTitle: "Featured properties",
+    featuredSubtitle: "Discover top listings across Indonesia",
+    viewAll: "View all",
+    propertiesFound: "properties found",
+    loadListingsError: "Could not load listings",
+    retry: "Retry",
+    noPropertiesTitle: "No properties found",
+    noPropertiesHint: "Try adjusting your filters",
+    placeholderMin: "Min",
+    placeholderMax: "Max",
+    whatsAppCta: "WhatsApp",
+    paymentProcessing: "Processing on Solana...",
+    paymentProcessingHint: "Confirming X402 micropayment",
+    paymentFullAddress: "Full address:",
+    paymentExactPrice: "Exact price:",
+    paymentProtocol: "Protocol",
+    paymentProtocolValue: "X402 Pay-per-Click",
+    paymentUnlockFailed: "Unlock failed",
+    paymentTryAgain: "Retry",
+    sessionUnavailable: "Session unavailable — try again in the browser.",
+    paymentUnknownError: "Something went wrong",
+    paymentUnlockServerError: "Could not confirm unlock",
+    paymentInstantNote:
+      "Transaction is processed instantly on Solana with near-zero fees via X402 protocol.",
+    paymentErrorHint: "Please try again.",
   },
   zh: {
     connectWallet: "连接钱包",
@@ -289,6 +375,30 @@ const translations: Record<Language, Translations> = {
     security: "24小时安保",
     pool: "游泳池",
     gym: "健身房",
+    featuredTitle: "精选房源",
+    featuredSubtitle: "发现印尼优质挂牌",
+    viewAll: "查看全部",
+    propertiesFound: "套房源",
+    loadListingsError: "无法加载列表",
+    retry: "重试",
+    noPropertiesTitle: "未找到房源",
+    noPropertiesHint: "请尝试调整筛选条件",
+    placeholderMin: "最小",
+    placeholderMax: "最大",
+    whatsAppCta: "WhatsApp",
+    paymentProcessing: "正在 Solana 上处理…",
+    paymentProcessingHint: "正在确认 X402 微支付",
+    paymentFullAddress: "详细地址：",
+    paymentExactPrice: "确切价格：",
+    paymentProtocol: "协议",
+    paymentProtocolValue: "X402 Pay-per-Click",
+    paymentUnlockFailed: "解锁失败",
+    paymentTryAgain: "重试",
+    sessionUnavailable: "会话不可用 — 请在浏览器中重试。",
+    paymentUnknownError: "出现错误",
+    paymentUnlockServerError: "无法确认解锁",
+    paymentInstantNote: "通过 X402 协议在 Solana 上即时处理交易，费用极低。",
+    paymentErrorHint: "请重试。",
   },
   ja: {
     connectWallet: "ウォレット接続",
@@ -357,6 +467,30 @@ const translations: Record<Language, Translations> = {
     security: "24時間セキュリティ",
     pool: "プール",
     gym: "ジム",
+    featuredTitle: "おすすめ物件",
+    featuredSubtitle: "インドネシア各地の厳選リスト",
+    viewAll: "すべて表示",
+    propertiesFound: "件の物件",
+    loadListingsError: "一覧を読み込めませんでした",
+    retry: "再試行",
+    noPropertiesTitle: "該当する物件がありません",
+    noPropertiesHint: "フィルターを調整してください",
+    placeholderMin: "最小",
+    placeholderMax: "最大",
+    whatsAppCta: "WhatsApp",
+    paymentProcessing: "Solana で処理中…",
+    paymentProcessingHint: "X402 マイクロペイメントを確認中",
+    paymentFullAddress: "住所：",
+    paymentExactPrice: "価格：",
+    paymentProtocol: "プロトコル",
+    paymentProtocolValue: "X402 Pay-per-Click",
+    paymentUnlockFailed: "解除に失敗しました",
+    paymentTryAgain: "再試行",
+    sessionUnavailable: "セッションを利用できません。ブラウザでもう一度お試しください。",
+    paymentUnknownError: "問題が発生しました",
+    paymentUnlockServerError: "解除を確認できませんでした",
+    paymentInstantNote: "X402 プロトコル経由で Solana 上で即時に処理され、手数料はほぼゼロです。",
+    paymentErrorHint: "もう一度お試しください。",
   },
   ru: {
     connectWallet: "Подключить кошелёк",
@@ -425,6 +559,31 @@ const translations: Record<Language, Translations> = {
     security: "Охрана 24/7",
     pool: "Бассейн",
     gym: "Тренажёрный зал",
+    featuredTitle: "Рекомендуемые объекты",
+    featuredSubtitle: "Лучшие объявления по всей Индонезии",
+    viewAll: "Смотреть все",
+    propertiesFound: "объектов найдено",
+    loadListingsError: "Не удалось загрузить список",
+    retry: "Повторить",
+    noPropertiesTitle: "Ничего не найдено",
+    noPropertiesHint: "Измените параметры фильтра",
+    placeholderMin: "Мин.",
+    placeholderMax: "Макс.",
+    whatsAppCta: "WhatsApp",
+    paymentProcessing: "Обработка в Solana…",
+    paymentProcessingHint: "Подтверждение микроплатежа X402",
+    paymentFullAddress: "Полный адрес:",
+    paymentExactPrice: "Точная цена:",
+    paymentProtocol: "Протокол",
+    paymentProtocolValue: "X402 Pay-per-Click",
+    paymentUnlockFailed: "Не удалось разблокировать",
+    paymentTryAgain: "Повторить",
+    sessionUnavailable: "Сессия недоступна — попробуйте снова в браузере.",
+    paymentUnknownError: "Что-то пошло не так",
+    paymentUnlockServerError: "Не удалось подтвердить разблокировку",
+    paymentInstantNote:
+      "Транзакция мгновенно обрабатывается в Solana с минимальными комиссиями через протокол X402.",
+    paymentErrorHint: "Пожалуйста, попробуйте снова.",
   },
   pt: {
     connectWallet: "Conectar Carteira",
@@ -493,6 +652,31 @@ const translations: Record<Language, Translations> = {
     security: "Segurança 24h",
     pool: "Piscina",
     gym: "Academia",
+    featuredTitle: "Imóveis em destaque",
+    featuredSubtitle: "Descubra os melhores anúncios na Indonésia",
+    viewAll: "Ver tudo",
+    propertiesFound: "imóveis encontrados",
+    loadListingsError: "Não foi possível carregar a lista",
+    retry: "Tentar de novo",
+    noPropertiesTitle: "Nenhum imóvel encontrado",
+    noPropertiesHint: "Ajuste os filtros e tente novamente",
+    placeholderMin: "Mín.",
+    placeholderMax: "Máx.",
+    whatsAppCta: "WhatsApp",
+    paymentProcessing: "Processando na Solana…",
+    paymentProcessingHint: "Confirmando micropagamento X402",
+    paymentFullAddress: "Endereço completo:",
+    paymentExactPrice: "Preço exato:",
+    paymentProtocol: "Protocolo",
+    paymentProtocolValue: "X402 Pay-per-Click",
+    paymentUnlockFailed: "Falha ao desbloquear",
+    paymentTryAgain: "Tentar de novo",
+    sessionUnavailable: "Sessão indisponível — tente novamente no navegador.",
+    paymentUnknownError: "Algo deu errado",
+    paymentUnlockServerError: "Não foi possível confirmar o desbloqueio",
+    paymentInstantNote:
+      "A transação é processada instantaneamente na Solana com taxas quase zero via protocolo X402.",
+    paymentErrorHint: "Tente novamente.",
   },
 }
 
