@@ -1,13 +1,16 @@
 "use client"
 
-import { useState } from "react"
-import { SlidersHorizontal, X, ChevronDown } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { SlidersHorizontal, X, ChevronDown, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { PropertyCard } from "@/components/property-card"
 import { PaymentModal } from "@/components/payment-modal"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useProperties } from "@/hooks/use-properties"
+import { getOrCreateBrowserSessionId } from "@/lib/browser-session"
 import { type Translations } from "@/lib/i18n"
-import { mockProperties, type Property, type PropertyType } from "@/lib/properties"
+import { type Property, type PropertyType } from "@/lib/properties"
 import { cn } from "@/lib/utils"
 
 interface DiscoveryPageProps {
@@ -30,6 +33,54 @@ export function DiscoveryPage({ t }: DiscoveryPageProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [unlockedProperties, setUnlockedProperties] = useState<Set<string>>(new Set())
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null)
+
+  const listFilters = useMemo(
+    () => ({
+      selectedType,
+      location,
+      minSize,
+      maxSize,
+      minPrice,
+      maxPrice,
+      selectedFacilities,
+      sortBy,
+    }),
+    [selectedType, location, minSize, maxSize, minPrice, maxPrice, selectedFacilities, sortBy]
+  )
+
+  const { properties, total, loading, error, refetch } = useProperties(listFilters)
+
+  useEffect(() => {
+    const sessionId = getOrCreateBrowserSessionId()
+    if (!sessionId) return
+    let cancelled = false
+    void (async () => {
+      try {
+        const res = await fetch(
+          `/api/unlocks?sessionId=${encodeURIComponent(sessionId)}`,
+          { cache: "no-store" }
+        )
+        const json: unknown = await res.json().catch(() => null)
+        if (cancelled || !res.ok) return
+        const ids =
+          json &&
+          typeof json === "object" &&
+          "data" in json &&
+          json.data &&
+          typeof json.data === "object" &&
+          "propertyIds" in json.data &&
+          Array.isArray((json.data as { propertyIds: unknown }).propertyIds)
+            ? (json.data as { propertyIds: string[] }).propertyIds
+            : []
+        setUnlockedProperties(new Set(ids.filter((id) => typeof id === "string")))
+      } catch {
+        /* keep empty set */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const facilityLabels: Record<string, string> = {
     wifi: t.wifi,
@@ -58,23 +109,6 @@ export function DiscoveryPage({ t }: DiscoveryPageProps) {
     setSelectedFacilities([])
     setSortBy("newest")
   }
-
-  const filtered = mockProperties
-    .filter((p) => {
-      if (selectedType && p.type !== selectedType) return false
-      if (location && !p.location.toLowerCase().includes(location.toLowerCase())) return false
-      if (minSize && p.size < parseInt(minSize)) return false
-      if (maxSize && p.size > parseInt(maxSize)) return false
-      if (minPrice && p.price < parseInt(minPrice)) return false
-      if (maxPrice && p.price > parseInt(maxPrice)) return false
-      if (selectedFacilities.length > 0 && !selectedFacilities.every((f) => p.facilities.includes(f))) return false
-      return true
-    })
-    .sort((a, b) => {
-      if (sortBy === "priceLow") return a.price - b.price
-      if (sortBy === "priceHigh") return b.price - a.price
-      return new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime()
-    })
 
   const handleUnlock = (property: Property) => {
     setSelectedProperty(property)
@@ -217,8 +251,13 @@ export function DiscoveryPage({ t }: DiscoveryPageProps) {
             <SlidersHorizontal className="w-4 h-4" />
             {t.filters}
           </Button>
-          <p className="text-sm text-muted-foreground">
-            <span className="font-semibold text-foreground">{filtered.length}</span> properties found
+          <p className="text-sm text-muted-foreground flex items-center gap-2">
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" aria-hidden />
+            ) : null}
+            <span>
+              <span className="font-semibold text-foreground">{loading ? "…" : total}</span> properties found
+            </span>
           </p>
         </div>
 
@@ -269,7 +308,28 @@ export function DiscoveryPage({ t }: DiscoveryPageProps) {
 
         {/* Grid */}
         <div className="flex-1">
-          {filtered.length === 0 ? (
+          {error ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center px-4">
+              <p className="font-semibold text-foreground">Could not load listings</p>
+              <p className="text-sm text-muted-foreground mt-1 max-w-md">{error}</p>
+              <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-4">
+                Retry
+              </Button>
+            </div>
+          ) : loading && properties.length === 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" aria-busy="true">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="rounded-2xl border border-border overflow-hidden bg-card">
+                  <Skeleton className="h-48 w-full rounded-none" />
+                  <div className="p-4 space-y-3">
+                    <Skeleton className="h-4 w-[85%]" />
+                    <Skeleton className="h-3 w-[55%]" />
+                    <Skeleton className="h-8 w-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : properties.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
                 <SlidersHorizontal className="w-7 h-7 text-muted-foreground" />
@@ -281,8 +341,8 @@ export function DiscoveryPage({ t }: DiscoveryPageProps) {
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filtered.map((property) => (
+            <div className={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4", loading && "opacity-70")}>
+              {properties.map((property) => (
                 <PropertyCard
                   key={property.id}
                   property={property}

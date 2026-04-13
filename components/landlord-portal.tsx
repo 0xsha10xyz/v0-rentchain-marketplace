@@ -86,8 +86,36 @@ export function LandlordPortal({ t }: LandlordPortalProps) {
     }
     setErrors({})
     setStep("processing")
-    await new Promise((resolve) => setTimeout(resolve, 2500))
-    setStep("success")
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1200))
+      const res = await fetch("/api/properties", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: propertyType,
+          size: Number(size),
+          price: Number(price),
+          facilities,
+          fullAddress: address,
+          whatsapp,
+        }),
+      })
+      const payload: unknown = await res.json().catch(() => null)
+      if (!res.ok) {
+        const raw =
+          payload && typeof payload === "object" && "error" in payload
+            ? (payload as { error?: { message?: unknown } }).error?.message
+            : undefined
+        const message = typeof raw === "string" ? raw : undefined
+        throw new Error(message ?? "Gagal menayangkan iklan")
+      }
+      setStep("success")
+    } catch (err) {
+      setStep("form")
+      setErrors({
+        submit: err instanceof Error ? err.message : "Gagal menayangkan iklan",
+      })
+    }
   }
 
   const handleReset = () => {
@@ -300,6 +328,11 @@ export function LandlordPortal({ t }: LandlordPortalProps) {
                     <p>Jaringan: Solana</p>
                   </div>
                 </div>
+                {errors.submit ? (
+                  <p className="text-sm text-destructive mb-3" role="alert">
+                    {errors.submit}
+                  </p>
+                ) : null}
                 <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-sm font-semibold gap-2">
                   <Wallet className="w-4 h-4" />
                   {t.payPublish}

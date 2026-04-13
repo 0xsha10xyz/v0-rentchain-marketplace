@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { Wallet, CheckCircle2, Loader2, X, Shield, Zap } from "lucide-react"
+import { Wallet, CheckCircle2, Loader2, X, Shield, Zap, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { getOrCreateBrowserSessionId } from "@/lib/browser-session"
 import { type Translations } from "@/lib/i18n"
 import { type Property, formatPrice } from "@/lib/properties"
 
@@ -13,23 +14,59 @@ interface PaymentModalProps {
   onSuccess: (propertyId: string) => void
 }
 
-type ModalStep = "confirm" | "processing" | "success"
+type ModalStep = "confirm" | "processing" | "success" | "error"
 
 export function PaymentModal({ property, t, onClose, onSuccess }: PaymentModalProps) {
   const [step, setStep] = useState<ModalStep>("confirm")
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   if (!property) return null
 
   const handleConfirm = async () => {
+    setErrorMessage(null)
     setStep("processing")
-    // Simulate blockchain transaction
-    await new Promise((resolve) => setTimeout(resolve, 2200))
-    setStep("success")
-    onSuccess(property.id)
+    try {
+      // Simulate chain confirmation latency before persisting the unlock server-side.
+      await new Promise((resolve) => setTimeout(resolve, 2200))
+      const sessionId = getOrCreateBrowserSessionId()
+      if (!sessionId) {
+        throw new Error("Session unavailable — try again in the browser.")
+      }
+      const res = await fetch("/api/unlocks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ propertyId: property.id, sessionId }),
+      })
+      const payload: unknown = await res.json().catch(() => null)
+      if (!res.ok) {
+        const message =
+          payload &&
+          typeof payload === "object" &&
+          "error" in payload &&
+          payload.error &&
+          typeof payload.error === "object" &&
+          "message" in payload.error &&
+          typeof (payload.error as { message: unknown }).message === "string"
+            ? (payload.error as { message: string }).message
+            : "Could not confirm unlock"
+        throw new Error(message)
+      }
+      setStep("success")
+      onSuccess(property.id)
+    } catch (e) {
+      setErrorMessage(e instanceof Error ? e.message : "Something went wrong")
+      setStep("error")
+    }
   }
 
   const handleDone = () => {
     onClose()
+    setStep("confirm")
+    setErrorMessage(null)
+  }
+
+  const handleRetry = () => {
+    setErrorMessage(null)
     setStep("confirm")
   }
 
@@ -133,6 +170,26 @@ export function PaymentModal({ property, t, onClose, onSuccess }: PaymentModalPr
             <Button onClick={handleDone} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
               {t.viewDetails}
             </Button>
+          </div>
+        )}
+
+        {step === "error" && (
+          <div className="px-5 py-8 flex flex-col items-center gap-4 text-center">
+            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+              <AlertCircle className="w-9 h-9 text-destructive" />
+            </div>
+            <div>
+              <h3 className="font-bold text-lg text-foreground">Unlock failed</h3>
+              <p className="text-sm text-muted-foreground mt-1">{errorMessage ?? "Please try again."}</p>
+            </div>
+            <div className="flex w-full gap-2">
+              <Button variant="outline" onClick={handleDone} className="flex-1 text-sm">
+                {t.paymentCancel}
+              </Button>
+              <Button onClick={handleRetry} className="flex-1 text-sm bg-primary hover:bg-primary/90">
+                Retry
+              </Button>
+            </div>
           </div>
         )}
       </div>

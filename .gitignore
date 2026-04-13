@@ -14,3 +14,6 @@ next.user-config.*
 node_modules
 .next/
 .DS_Store
+
+# Local marketplace API persistence (see MARKETPLACE_STATE_PATH)
+/data/
