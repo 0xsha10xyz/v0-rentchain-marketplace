@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Search, Globe, ChevronDown, Menu, X, Building2 } from "lucide-react"
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui"
+import { BaseWalletMultiButton } from "@solana/wallet-adapter-react-ui"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -21,6 +21,16 @@ interface HeaderProps {
   activeView: "home" | "discover" | "post"
   onViewChange: (view: "home" | "discover" | "post") => void
 }
+
+const walletButtonLabels = {
+  "change-wallet": "Change wallet",
+  connecting: "Connecting ...",
+  "copy-address": "Copy address",
+  copied: "Copied",
+  disconnect: "Disconnect",
+  "has-wallet": "Connect",
+  "no-wallet": "connect wallet",
+} as const
 
 export function Header({ lang, t, onLangChange, activeView, onViewChange }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -115,7 +125,10 @@ export function Header({ lang, t, onLangChange, activeView, onViewChange }: Head
             </DropdownMenu>
 
             <div className="hidden sm:block shrink-0 [&_.wallet-adapter-button-trigger]:h-9">
-              <WalletMultiButton className="!rounded-md !bg-primary !text-primary-foreground !text-sm !font-medium !h-9 hover:!bg-primary/90" />
+              <BaseWalletMultiButton
+                labels={walletButtonLabels}
+                className="!rounded-md !bg-primary !text-primary-foreground !text-sm !font-medium !h-9 hover:!bg-primary/90"
+              />
             </div>
 
             {/* Mobile menu button */}
@@ -190,7 +203,10 @@ export function Header({ lang, t, onLangChange, activeView, onViewChange }: Head
             </DropdownMenu>
           </div>
           <div className="sm:hidden pt-2 border-t border-border mt-2">
-            <WalletMultiButton className="!w-full !justify-center !rounded-md !bg-primary !text-primary-foreground !text-sm !font-medium !h-10 hover:!bg-primary/90" />
+            <BaseWalletMultiButton
+              labels={walletButtonLabels}
+              className="!w-full !justify-center !rounded-md !bg-primary !text-primary-foreground !text-sm !font-medium !h-10 hover:!bg-primary/90"
+            />
           </div>
         </div>
       )}
