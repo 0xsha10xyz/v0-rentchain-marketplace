@@ -1,0 +1,162 @@
+export type PropertyType = "Kost" | "Ruko" | "Kontrakan" | "Villa"
+
+export interface Property {
+  id: string
+  type: PropertyType
+  title: string
+  location: string
+  fullAddress: string
+  blurredPrice: string
+  price: number
+  size: number
+  beds: number
+  baths: number
+  facilities: string[]
+  image: string
+  whatsapp: string
+  featured?: boolean
+  postedAt: string
+}
+
+export const mockProperties: Property[] = [
+  {
+    id: "1",
+    type: "Kost",
+    title: "Kost Putri Strategis Dekat Kampus UI",
+    location: "Depok, Jawa Barat",
+    fullAddress: "Jl. Margonda Raya No. 45, Depok, Jawa Barat 16424",
+    blurredPrice: "Rp 1.•••.000",
+    price: 1500000,
+    size: 12,
+    beds: 1,
+    baths: 1,
+    facilities: ["wifi", "ac", "laundry", "security"],
+    image: "/images/kost-1.jpg",
+    whatsapp: "628123456789",
+    featured: true,
+    postedAt: "2025-01-10",
+  },
+  {
+    id: "2",
+    type: "Ruko",
+    title: "Ruko 3 Lantai di Kawasan Bisnis Sudirman",
+    location: "Jakarta Pusat, DKI Jakarta",
+    fullAddress: "Jl. Jenderal Sudirman Kav. 52, Jakarta Pusat 10220",
+    blurredPrice: "Rp ••.•••.000",
+    price: 35000000,
+    size: 250,
+    beds: 3,
+    baths: 4,
+    facilities: ["parking", "security", "ac"],
+    image: "/images/ruko-1.jpg",
+    whatsapp: "628234567890",
+    postedAt: "2025-01-12",
+  },
+  {
+    id: "3",
+    type: "Kontrakan",
+    title: "Rumah Kontrakan 2 Kamar Tidur BSD City",
+    location: "Tangerang Selatan, Banten",
+    fullAddress: "Jl. BSD Raya Utama No. 12, Serpong, Tangerang Selatan 15331",
+    blurredPrice: "Rp •.•••.000",
+    price: 4500000,
+    size: 72,
+    beds: 2,
+    baths: 1,
+    facilities: ["parking", "kitchen", "wifi"],
+    image: "/images/kontrakan-1.jpg",
+    whatsapp: "628345678901",
+    featured: true,
+    postedAt: "2025-01-08",
+  },
+  {
+    id: "4",
+    type: "Villa",
+    title: "Villa Private Pool View Sawah Ubud",
+    location: "Ubud, Bali",
+    fullAddress: "Jl. Raya Tegallalang No. 8, Ubud, Gianyar, Bali 80571",
+    blurredPrice: "Rp ••.•••.000",
+    price: 25000000,
+    size: 400,
+    beds: 4,
+    baths: 3,
+    facilities: ["pool", "wifi", "parking", "gym", "ac", "kitchen"],
+    image: "/images/villa-1.jpg",
+    whatsapp: "628456789012",
+    featured: true,
+    postedAt: "2025-01-14",
+  },
+  {
+    id: "5",
+    type: "Kost",
+    title: "Kost Eksklusif Full Furnished Kuningan",
+    location: "Jakarta Selatan, DKI Jakarta",
+    fullAddress: "Jl. Kuningan Mulia No. 9B, Jakarta Selatan 12980",
+    blurredPrice: "Rp •.•••.000",
+    price: 3500000,
+    size: 20,
+    beds: 1,
+    baths: 1,
+    facilities: ["wifi", "ac", "laundry", "gym", "security"],
+    image: "/images/kost-2.jpg",
+    whatsapp: "628567890123",
+    postedAt: "2025-01-11",
+  },
+  {
+    id: "6",
+    type: "Kontrakan",
+    title: "Kontrakan Bagus 3 Kamar Bogor Tengah",
+    location: "Bogor, Jawa Barat",
+    fullAddress: "Jl. Pajajaran No. 77, Bogor Tengah, Kota Bogor 16151",
+    blurredPrice: "Rp •.•••.000",
+    price: 3000000,
+    size: 90,
+    beds: 3,
+    baths: 2,
+    facilities: ["parking", "kitchen", "security"],
+    image: "/images/kontrakan-2.jpg",
+    whatsapp: "628678901234",
+    postedAt: "2025-01-09",
+  },
+  {
+    id: "7",
+    type: "Ruko",
+    title: "Ruko 2 Lantai Strategis Bandung Kota",
+    location: "Bandung, Jawa Barat",
+    fullAddress: "Jl. Riau No. 120, Bandung, Jawa Barat 40115",
+    blurredPrice: "Rp ••.•••.000",
+    price: 18000000,
+    size: 160,
+    beds: 2,
+    baths: 3,
+    facilities: ["parking", "ac", "security"],
+    image: "/images/ruko-2.jpg",
+    whatsapp: "628789012345",
+    postedAt: "2025-01-07",
+  },
+  {
+    id: "8",
+    type: "Villa",
+    title: "Villa Tepi Pantai Seminyak Bali",
+    location: "Seminyak, Bali",
+    fullAddress: "Jl. Petitenget No. 99, Seminyak, Badung, Bali 80361",
+    blurredPrice: "Rp ••.•••.000",
+    price: 45000000,
+    size: 600,
+    beds: 5,
+    baths: 5,
+    facilities: ["pool", "wifi", "parking", "gym", "ac", "kitchen", "security"],
+    image: "/images/villa-2.jpg",
+    whatsapp: "628890123456",
+    postedAt: "2025-01-13",
+  },
+]
+
+export function formatPrice(price: number): string {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(price)
+}
