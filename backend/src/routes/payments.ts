@@ -28,7 +28,7 @@ export function registerPaymentRoutes(router: Router) {
     }
 
     const config = getX402AppConfig()
-    const resourceUrl = `${config.appBaseUrl}/payments/unlock`
+    const resourceUrl = `${config.appBaseUrl}/api/payments/unlock`
 
     if (!config.paymentsEnabled) {
       try {
