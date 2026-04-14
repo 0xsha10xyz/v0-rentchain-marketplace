@@ -23,14 +23,14 @@ type ModalStep = "confirm" | "processing" | "success" | "error"
 
 function errorMessageFromJson(payload: unknown, fallback: string): string {
   if (!payload || typeof payload !== "object") return fallback
-  if (
-    "error" in payload &&
-    payload.error &&
-    typeof payload.error === "object" &&
-    "message" in payload.error &&
-    typeof (payload.error as { message: unknown }).message === "string"
-  ) {
-    return (payload.error as { message: string }).message
+  if ("error" in payload && payload.error && typeof payload.error === "object") {
+    const err = payload.error as { message?: unknown; reason?: unknown }
+    const message = typeof err.message === "string" ? err.message : fallback
+    const reason = typeof err.reason === "string" ? err.reason.trim() : ""
+    if (reason && reason !== message) {
+      return `${message} (${reason})`
+    }
+    return message
   }
   return fallback
 }
