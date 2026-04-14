@@ -1,3 +1,4 @@
+import { safeBase64Encode } from "@payai/x402/utils"
 import { NextResponse, type NextRequest } from "next/server"
 import { z } from "zod"
 
@@ -62,7 +63,12 @@ export async function POST(request: NextRequest) {
 
   if (!paymentHeader) {
     const response = x402.create402Response(paymentRequirements, resourceUrl)
-    return NextResponse.json(response.body, { status: response.status })
+    const body = response.body
+    const paymentRequired = safeBase64Encode(JSON.stringify(body))
+    return NextResponse.json(body, {
+      status: response.status,
+      headers: { "PAYMENT-REQUIRED": paymentRequired },
+    })
   }
 
   const verified = await x402.verifyPayment(paymentHeader, paymentRequirements)

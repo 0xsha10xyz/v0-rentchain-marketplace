@@ -1,3 +1,4 @@
+import { safeBase64Encode } from "@payai/x402/utils"
 import type { VercelRequest, VercelResponse } from "@vercel/node"
 import { z } from "zod"
 
@@ -57,7 +58,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (!paymentHeader) {
     const response = x402.create402Response(paymentRequirements, resourceUrl)
-    return res.status(response.status).json(response.body)
+    const body = response.body
+    res.setHeader("PAYMENT-REQUIRED", safeBase64Encode(JSON.stringify(body)))
+    return res.status(response.status).json(body)
   }
 
   const verified = await x402.verifyPayment(paymentHeader, paymentRequirements)

@@ -21,6 +21,20 @@ interface PaymentModalProps {
 
 type ModalStep = "confirm" | "processing" | "success" | "error"
 
+function errorMessageFromJson(payload: unknown, fallback: string): string {
+  if (!payload || typeof payload !== "object") return fallback
+  if (
+    "error" in payload &&
+    payload.error &&
+    typeof payload.error === "object" &&
+    "message" in payload.error &&
+    typeof (payload.error as { message: unknown }).message === "string"
+  ) {
+    return (payload.error as { message: string }).message
+  }
+  return fallback
+}
+
 export function PaymentModal({ property, t, onClose, onSuccess }: PaymentModalProps) {
   const [step, setStep] = useState<ModalStep>("confirm")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -37,7 +51,7 @@ export function PaymentModal({ property, t, onClose, onSuccess }: PaymentModalPr
         throw new Error(t.sessionUnavailable)
       }
 
-      const url = "/api/payments/unlock"
+      const url = new URL("/api/payments/unlock", window.location.origin).toString()
       const init: RequestInit = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -68,27 +82,22 @@ export function PaymentModal({ property, t, onClose, onSuccess }: PaymentModalPr
         res = await fetch(url, init)
       }
 
-      if (res.status === 402) {
-        throw new Error(t.connectWallet)
-      }
-
       const payload: unknown = await res.json().catch(() => null)
-      if (!res.ok) {
-        const message =
-          payload &&
-          typeof payload === "object" &&
-          "error" in payload &&
-          payload.error &&
-          typeof payload.error === "object" &&
-          "message" in payload.error &&
-          typeof (payload.error as { message: unknown }).message === "string"
-            ? (payload.error as { message: string }).message
-            : t.paymentUnlockServerError
-        throw new Error(message)
+
+      if (res.ok) {
+        setStep("success")
+        onSuccess(property.id)
+        return
       }
 
-      setStep("success")
-      onSuccess(property.id)
+      if (res.status === 402) {
+        if (!walletReady) {
+          throw new Error(t.connectWallet)
+        }
+        throw new Error(errorMessageFromJson(payload, t.paymentUnlockServerError))
+      }
+
+      throw new Error(errorMessageFromJson(payload, t.paymentUnlockServerError))
     } catch (e) {
       setErrorMessage(e instanceof Error ? e.message : t.paymentUnknownError)
       setStep("error")
