@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { Property, PropertyType } from "@/lib/properties"
-import { apiUrl } from "@/lib/api-base"
 
 export interface PropertyListFilters {
   selectedType: PropertyType | ""
@@ -90,7 +89,7 @@ export function useProperties(filters: PropertyListFilters, debounceMs = 400): U
       setLoading(true)
       setError(null)
       try {
-        const res = await fetch(apiUrl(`/api/properties?${queryString}`), {
+        const res = await fetch(`/api/properties?${queryString}`, {
           signal,
           cache: "no-store",
         })

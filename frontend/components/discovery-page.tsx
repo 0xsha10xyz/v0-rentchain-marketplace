@@ -12,7 +12,6 @@ import { getOrCreateBrowserSessionId } from "@/lib/browser-session"
 import { type Translations } from "@/lib/i18n"
 import { type Property, type PropertyType } from "@/lib/properties"
 import { cn } from "@/lib/utils"
-import { apiUrl } from "@/lib/api-base"
 
 interface DiscoveryPageProps {
   t: Translations
@@ -58,7 +57,7 @@ export function DiscoveryPage({ t }: DiscoveryPageProps) {
     void (async () => {
       try {
         const res = await fetch(
-          apiUrl(`/api/unlocks?sessionId=${encodeURIComponent(sessionId)}`),
+          `/api/unlocks?sessionId=${encodeURIComponent(sessionId)}`,
           { cache: "no-store" }
         )
         const json: unknown = await res.json().catch(() => null)
