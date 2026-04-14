@@ -6,6 +6,10 @@ import { appendUnlock, getMarketplaceState } from "@/lib/server/marketplace-stat
 import { jsonError } from "@/lib/server/http"
 import { getX402AppConfig } from "@/lib/x402/config"
 import { createX402PaymentHandler } from "@/lib/x402/handler"
+import {
+  assertUnlockAcceptedMatchesConfig,
+  parsePaymentSignatureAccepted,
+} from "@/lib/x402/validate-unlock-accepted"
 
 export const runtime = "nodejs"
 
@@ -49,19 +53,18 @@ export async function POST(request: NextRequest) {
   const x402 = createX402PaymentHandler()
   const paymentHeader = x402.extractPayment(request.headers)
 
-  const paymentRequirements = await x402.createPaymentRequirements(
-    {
-      amount: config.unlockPriceAtomic,
-      asset: {
-        address: config.usdcMint,
-        decimals: 6,
-      },
-      description: config.unlockDescription,
-    },
-    resourceUrl
-  )
-
   if (!paymentHeader) {
+    const paymentRequirements = await x402.createPaymentRequirements(
+      {
+        amount: config.unlockPriceAtomic,
+        asset: {
+          address: config.usdcMint,
+          decimals: 6,
+        },
+        description: config.unlockDescription,
+      },
+      resourceUrl
+    )
     const response = x402.create402Response(paymentRequirements, resourceUrl)
     const body = response.body
     const paymentRequired = safeBase64Encode(JSON.stringify(body))
@@ -71,7 +74,25 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  const verified = await x402.verifyPayment(paymentHeader, paymentRequirements)
+  const paymentParsed = parsePaymentSignatureAccepted(paymentHeader)
+  if (!paymentParsed.ok) {
+    return jsonError(400, "INVALID_PAYMENT_HEADER", paymentParsed.message)
+  }
+  const policy = assertUnlockAcceptedMatchesConfig(paymentParsed.accepted, config)
+  if (!policy.ok) {
+    return NextResponse.json(
+      {
+        error: {
+          code: "INVALID_PAYMENT",
+          message: policy.message,
+          reason: "policy_mismatch",
+        },
+      },
+      { status: 402 }
+    )
+  }
+
+  const verified = await x402.verifyPayment(paymentHeader, paymentParsed.accepted as never)
   if (!verified.isValid) {
     return NextResponse.json(
       {
@@ -92,7 +113,7 @@ export async function POST(request: NextRequest) {
     return jsonError(500, "UNLOCK_FAILED", "Could not record unlock after payment verification")
   }
 
-  const settlement = await x402.settlePayment(paymentHeader, paymentRequirements)
+  const settlement = await x402.settlePayment(paymentHeader, paymentParsed.accepted as never)
   if (!settlement.success) {
     console.error("[x402] settlement failed", settlement.errorReason)
   }

@@ -6,6 +6,10 @@ import { jsonError } from "../../src/lib/server/http.js"
 import { appendUnlock, getMarketplaceState } from "../../src/lib/server/marketplace-state.js"
 import { getX402AppConfig } from "../../src/lib/x402/config.js"
 import { createX402PaymentHandler } from "../../src/lib/x402/handler.js"
+import {
+  assertUnlockAcceptedMatchesConfig,
+  parsePaymentSignatureAccepted,
+} from "../../src/lib/x402/validate-unlock-accepted.js"
 
 const bodySchema = z.object({
   propertyId: z.string().min(1).max(64),
@@ -47,23 +51,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const x402 = createX402PaymentHandler()
   const paymentHeader = x402.extractPayment(req.headers as Record<string, string | string[] | undefined>)
 
-  const paymentRequirements = await x402.createPaymentRequirements(
-    {
-      amount: config.unlockPriceAtomic,
-      asset: { address: config.usdcMint, decimals: 6 },
-      description: config.unlockDescription,
-    },
-    resourceUrl
-  )
-
   if (!paymentHeader) {
+    const paymentRequirements = await x402.createPaymentRequirements(
+      {
+        amount: config.unlockPriceAtomic,
+        asset: { address: config.usdcMint, decimals: 6 },
+        description: config.unlockDescription,
+      },
+      resourceUrl
+    )
     const response = x402.create402Response(paymentRequirements, resourceUrl)
     const body = response.body
     res.setHeader("PAYMENT-REQUIRED", safeBase64Encode(JSON.stringify(body)))
     return res.status(response.status).json(body)
   }
 
-  const verified = await x402.verifyPayment(paymentHeader, paymentRequirements)
+  const paymentParsed = parsePaymentSignatureAccepted(paymentHeader)
+  if (!paymentParsed.ok) {
+    const err = jsonError(400, "INVALID_PAYMENT_HEADER", paymentParsed.message)
+    return res.status(err.status).json(err.body)
+  }
+  const policy = assertUnlockAcceptedMatchesConfig(paymentParsed.accepted, config)
+  if (!policy.ok) {
+    return res.status(402).json({
+      error: { code: "INVALID_PAYMENT", message: policy.message, reason: "policy_mismatch" },
+    })
+  }
+
+  const verified = await x402.verifyPayment(paymentHeader, paymentParsed.accepted as never)
   if (!verified.isValid) {
     return res.status(402).json({
       error: { code: "INVALID_PAYMENT", message: "Invalid payment", reason: verified.invalidReason },
@@ -78,7 +93,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(err.status).json(err.body)
   }
 
-  const settlement = await x402.settlePayment(paymentHeader, paymentRequirements)
+  const settlement = await x402.settlePayment(paymentHeader, paymentParsed.accepted as never)
   if (!settlement.success) {
     // eslint-disable-next-line no-console
     console.error("[x402] settlement failed", settlement.errorReason)
