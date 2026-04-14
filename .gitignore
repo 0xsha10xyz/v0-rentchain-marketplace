@@ -7,13 +7,19 @@ __v0_jsx-dev-runtime.ts
 .vercel/
 next.user-config.*
 
-# Environment variables
+# Environment variables (never commit real secrets)
+.env
 .env*.local
+*.pem
+*.p12
 
 # Common ignores
 node_modules
 .next/
 .DS_Store
+
+# Compiled backend (local `tsc` output — not for Git)
+backend/dist/
 
 # Local marketplace API persistence (see MARKETPLACE_STATE_PATH)
 /data/
