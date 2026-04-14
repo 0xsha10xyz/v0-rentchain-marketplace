@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button"
 import { getOrCreateBrowserSessionId } from "@/lib/browser-session"
 import { type Translations } from "@/lib/i18n"
 import { type Property, formatPrice } from "@/lib/properties"
+import { resolveBrowserSolanaRpcUrl } from "@/lib/solana-endpoint"
 import { getX402ClientNetwork } from "@/lib/x402/browser-network"
 import { UNLOCK_PRICE_ATOMIC } from "@/lib/x402/config"
-import { apiUrl } from "@/lib/api-base"
 
 interface PaymentModalProps {
   property: Property | null
@@ -37,7 +37,7 @@ export function PaymentModal({ property, t, onClose, onSuccess }: PaymentModalPr
         throw new Error(t.sessionUnavailable)
       }
 
-      const url = apiUrl("/api/payments/unlock")
+      const url = "/api/payments/unlock"
       const init: RequestInit = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -51,12 +51,14 @@ export function PaymentModal({ property, t, onClose, onSuccess }: PaymentModalPr
 
       let res: Response
       if (walletReady) {
+        const x402Network = getX402ClientNetwork()
         const client = createX402Client({
           wallet: {
             address: wallet.publicKey!.toBase58(),
             signTransaction: async (tx) => wallet.signTransaction!(tx),
           },
-          network: getX402ClientNetwork(),
+          network: x402Network,
+          rpcUrl: resolveBrowserSolanaRpcUrl(x402Network === "solana"),
           amount: BigInt(
             process.env.NEXT_PUBLIC_X402_UNLOCK_PRICE_ATOMIC?.trim() || UNLOCK_PRICE_ATOMIC
           ),
