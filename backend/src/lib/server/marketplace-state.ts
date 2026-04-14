@@ -27,6 +27,10 @@ function dirnameOfFile(filePath: string): string {
 function statePath(): string {
   const override = process.env.MARKETPLACE_STATE_PATH?.trim()
   if (override) return override
+  // Vercel Functions filesystem is read-only except /tmp
+  if (process.env.VERCEL) {
+    return "/tmp/marketplace-state.json"
+  }
   const cwd = process.cwd().replace(/\\/g, "/")
   return `${cwd}/data/marketplace-state.json`
 }
