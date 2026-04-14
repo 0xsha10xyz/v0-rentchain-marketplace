@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "framework": "nextjs",
+  "installCommand": "npm --prefix frontend install",
+  "buildCommand": "npm --prefix frontend run build",
+  "devCommand": "npm --prefix frontend run dev -- --webpack",
+  "outputDirectory": "frontend/.next"
+}
+
