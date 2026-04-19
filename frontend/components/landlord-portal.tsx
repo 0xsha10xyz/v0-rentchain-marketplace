@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import { useWallet } from "@solana/wallet-adapter-react"
+import { createX402Client } from "x402-solana/client"
 import {
   Home,
   Store,
@@ -16,6 +18,9 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { type Translations } from "@/lib/i18n"
+import { resolveBrowserSolanaRpcUrl } from "@/lib/solana-endpoint"
+import { listingFeeAtomicUsdc, type ListingDurationDays } from "@/lib/x402/listing-fees"
+import { getX402ClientNetwork } from "@/lib/x402/browser-network"
 import { cn } from "@/lib/utils"
 
 interface LandlordPortalProps {
@@ -77,9 +82,23 @@ function parseListingApiError(payload: unknown): { fields: Record<string, string
   return { fields, summary }
 }
 
+function listingPaymentErrorMessage(payload: unknown, fallback: string): string {
+  if (!payload || typeof payload !== "object") return fallback
+  if ("error" in payload && payload.error && typeof payload.error === "object") {
+    const err = payload.error as { message?: unknown; reason?: unknown }
+    const message = typeof err.message === "string" ? err.message : fallback
+    const reason = typeof err.reason === "string" ? err.reason.trim() : ""
+    if (reason && reason !== message) return `${message} (${reason})`
+    return message
+  }
+  return fallback
+}
+
 type FormStep = "form" | "processing" | "success"
+type ListingPayMode = "demo" | "x402"
 
 export function LandlordPortal({ t }: LandlordPortalProps) {
+  const wallet = useWallet()
   const [step, setStep] = useState<FormStep>("form")
   const [propertyType, setPropertyType] = useState<PropertyType>("")
   const [size, setSize] = useState("")
@@ -89,6 +108,7 @@ export function LandlordPortal({ t }: LandlordPortalProps) {
   const [whatsapp, setWhatsapp] = useState("")
   const [duration, setDuration] = useState(7)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [lastPayMode, setLastPayMode] = useState<ListingPayMode | null>(null)
 
   const selectedDuration = durationOptions.find((d) => d.days === duration)!
 
@@ -119,25 +139,64 @@ export function LandlordPortal({ t }: LandlordPortalProps) {
     setErrors({})
     setStep("processing")
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1200))
-      const res = await fetch("/api/properties", {
+      const url = new URL("/api/properties", window.location.origin).toString()
+      const bodyJson = {
+        type: propertyType,
+        size: Number(size),
+        price: Number(price),
+        facilities,
+        fullAddress: address.trim(),
+        whatsapp: whatsapp.trim(),
+        adDurationDays: duration as ListingDurationDays,
+      }
+      const init: RequestInit = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: propertyType,
-          size: Number(size),
-          price: Number(price),
-          facilities,
-          fullAddress: address.trim(),
-          whatsapp: whatsapp.trim(),
-        }),
-      })
+        body: JSON.stringify(bodyJson),
+      }
+
+      const walletReady =
+        wallet.connected &&
+        wallet.publicKey &&
+        typeof wallet.signTransaction === "function"
+
+      let res: Response
+      if (walletReady) {
+        const x402Network = getX402ClientNetwork()
+        const client = createX402Client({
+          wallet: {
+            address: wallet.publicKey!.toBase58(),
+            signTransaction: async (tx) => wallet.signTransaction!(tx),
+          },
+          network: x402Network,
+          rpcUrl: resolveBrowserSolanaRpcUrl(x402Network === "solana"),
+          amount: BigInt(listingFeeAtomicUsdc(duration as ListingDurationDays)),
+        })
+        res = await client.fetch(url, init)
+      } else {
+        res = await fetch(url, init)
+      }
+
       const payload: unknown = await res.json().catch(() => null)
+
+      if (res.status === 402 && !walletReady) {
+        setStep("form")
+        setErrors({
+          submit:
+            "Biaya iklan memerlukan pembayaran USDC. Hubungkan dompet (Phantom / Solflare), lalu coba lagi.",
+        })
+        return
+      }
+
       if (!res.ok) {
         setStep("form")
         const { fields, summary } = parseListingApiError(payload)
         if (Object.keys(fields).length > 0) {
           setErrors({ ...fields, ...(summary ? { submit: summary } : {}) })
+        } else if (res.status === 402) {
+          setErrors({
+            submit: listingPaymentErrorMessage(payload, "Pembayaran tidak valid. Periksa saldo USDC dan coba lagi."),
+          })
         } else {
           const raw =
             payload && typeof payload === "object" && "error" in payload
@@ -148,6 +207,9 @@ export function LandlordPortal({ t }: LandlordPortalProps) {
         }
         return
       }
+
+      const okPayload = payload as { mode?: ListingPayMode } | null
+      setLastPayMode(okPayload?.mode === "x402" ? "x402" : "demo")
       setStep("success")
     } catch (err) {
       setStep("form")
@@ -167,6 +229,7 @@ export function LandlordPortal({ t }: LandlordPortalProps) {
     setWhatsapp("")
     setDuration(7)
     setErrors({})
+    setLastPayMode(null)
   }
 
   return (
@@ -388,6 +451,9 @@ export function LandlordPortal({ t }: LandlordPortalProps) {
               <div>
                 <p className="text-lg font-bold text-foreground">Memproses di Solana...</p>
                 <p className="text-sm text-muted-foreground mt-1">Mengkonfirmasi pembayaran USDC via X402</p>
+                <p className="text-xs text-muted-foreground mt-2 max-w-sm mx-auto">
+                  Jika biaya iklan aktif di server, buka popup dompet dan setujui transfer USDC.
+                </p>
               </div>
               <div className="w-full max-w-xs bg-secondary rounded-full h-2 overflow-hidden">
                 <div className="h-full bg-primary rounded-full w-full" style={{ animation: "progress 2.5s ease-in-out forwards" }} />
@@ -415,6 +481,13 @@ export function LandlordPortal({ t }: LandlordPortalProps) {
                 <p className="text-sm text-muted-foreground mt-2 max-w-sm">
                   Properti Anda telah aktif dan bisa ditemukan oleh pencari kost di seluruh Indonesia.
                 </p>
+                {lastPayMode === "x402" ? (
+                  <p className="text-xs text-accent font-medium mt-2">Pembayaran biaya iklan USDC dikonfirmasi on-chain.</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Mode demo: server tidak meminta pembayaran (set <span className="font-mono">TREASURY_WALLET_ADDRESS</span> di Vercel untuk USDC live).
+                  </p>
+                )}
               </div>
               <div className="bg-secondary rounded-2xl p-5 w-full max-w-sm text-left space-y-3">
                 <div className="flex justify-between text-sm">

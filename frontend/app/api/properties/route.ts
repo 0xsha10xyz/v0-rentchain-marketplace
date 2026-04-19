@@ -1,7 +1,19 @@
+import { NextResponse, type NextRequest } from "next/server"
+
 import { addProperty, buildPropertyFromPayload, getMarketplaceState } from "@/lib/server/marketplace-state"
 import { jsonError } from "@/lib/server/http"
 import { filterAndSortProperties } from "@/lib/server/property-query"
 import { createPropertyBodySchema, propertyListQuerySchema } from "@/lib/server/schemas"
+import { getX402AppConfig } from "@/lib/x402/config"
+import {
+  listingFeeAtomicUsdc,
+  listingFeeDescription,
+  type ListingDurationDays,
+} from "@/lib/x402/listing-fees"
+
+export const maxDuration = 30
+
+export const runtime = "nodejs"
 
 function parseListQuery(searchParams: URLSearchParams) {
   const raw: Record<string, string | string[] | undefined> = {}
@@ -37,7 +49,7 @@ export async function GET(request: Request) {
   })
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   let body: unknown
   try {
     body = await request.json()
@@ -50,8 +62,95 @@ export async function POST(request: Request) {
     return jsonError(400, "INVALID_BODY", "Invalid listing payload", parsed.error.flatten())
   }
 
-  const property = buildPropertyFromPayload(parsed.data)
-  await addProperty(property)
+  const listingPayload = parsed.data
+  const config = getX402AppConfig()
+  const resourceUrl = `${config.appBaseUrl}/api/properties`
+  const duration = listingPayload.adDurationDays as ListingDurationDays
+  const feeAtomic = listingFeeAtomicUsdc(duration)
 
-  return Response.json({ data: property }, { status: 201 })
+  if (!config.paymentsEnabled) {
+    const property = buildPropertyFromPayload(listingPayload)
+    await addProperty(property)
+    return NextResponse.json({ data: property, mode: "demo" as const }, { status: 201 })
+  }
+
+  const [{ safeBase64Encode }, { createX402PaymentHandler }, { assertListingAcceptedMatchesConfig }, { parsePaymentSignatureAccepted }] =
+    await Promise.all([
+      import("@payai/x402/utils"),
+      import("@/lib/x402/handler"),
+      import("@/lib/x402/validate-listing-accepted"),
+      import("@/lib/x402/validate-unlock-accepted"),
+    ])
+
+  const x402 = await createX402PaymentHandler()
+  const paymentHeader = x402.extractPayment(request.headers)
+
+  if (!paymentHeader) {
+    const paymentRequirements = await x402.createPaymentRequirements(
+      {
+        amount: feeAtomic,
+        asset: {
+          address: config.usdcMint,
+          decimals: 6,
+        },
+        description: listingFeeDescription(duration),
+      },
+      resourceUrl
+    )
+    const response = x402.create402Response(paymentRequirements, resourceUrl)
+    const resBody = response.body
+    const paymentRequired = safeBase64Encode(JSON.stringify(resBody))
+    return NextResponse.json(resBody, {
+      status: response.status,
+      headers: { "PAYMENT-REQUIRED": paymentRequired },
+    })
+  }
+
+  const paymentParsed = parsePaymentSignatureAccepted(paymentHeader)
+  if (!paymentParsed.ok) {
+    return jsonError(400, "INVALID_PAYMENT_HEADER", paymentParsed.message)
+  }
+
+  const policy = assertListingAcceptedMatchesConfig(paymentParsed.accepted, config, feeAtomic)
+  if (!policy.ok) {
+    return NextResponse.json(
+      {
+        error: {
+          code: "INVALID_PAYMENT",
+          message: policy.message,
+          reason: "policy_mismatch",
+        },
+      },
+      { status: 402 }
+    )
+  }
+
+  const verified = await x402.verifyPayment(paymentHeader, paymentParsed.accepted as never)
+  if (!verified.isValid) {
+    return NextResponse.json(
+      {
+        error: {
+          code: "INVALID_PAYMENT",
+          message: "Invalid payment",
+          reason: verified.invalidReason,
+        },
+      },
+      { status: 402 }
+    )
+  }
+
+  let property
+  try {
+    property = buildPropertyFromPayload(listingPayload)
+    await addProperty(property)
+  } catch {
+    return jsonError(500, "LISTING_FAILED", "Could not save listing after payment verification")
+  }
+
+  const settlement = await x402.settlePayment(paymentHeader, paymentParsed.accepted as never)
+  if (!settlement.success) {
+    console.error("[x402] listing settlement failed", settlement.errorReason)
+  }
+
+  return NextResponse.json({ data: property, mode: "x402" as const }, { status: 201 })
 }

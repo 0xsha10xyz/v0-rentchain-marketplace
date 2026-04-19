@@ -2,6 +2,8 @@ import { z } from "zod"
 
 const propertyTypeEnum = z.enum(["Kost", "Ruko", "Kontrakan", "Villa"])
 
+const listingDurationEnum = z.union([z.literal(7), z.literal(14), z.literal(30)])
+
 export const propertyListQuerySchema = z.object({
   type: propertyTypeEnum.optional().or(z.literal("")).transform((v) => (v === "" ? undefined : v)),
   location: z.string().optional(),
@@ -37,6 +39,7 @@ export const createPropertyBodySchema = z.object({
   title: z.string().min(3).max(200).optional(),
   location: z.string().min(2).max(200).optional(),
   image: z.string().min(1).max(500).optional(),
+  adDurationDays: listingDurationEnum.default(7),
 })
 
 export type CreatePropertyBody = z.infer<typeof createPropertyBodySchema>
