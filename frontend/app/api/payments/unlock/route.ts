@@ -1,15 +1,12 @@
-import { safeBase64Encode } from "@payai/x402/utils"
 import { NextResponse, type NextRequest } from "next/server"
 import { z } from "zod"
 
 import { appendUnlock, getMarketplaceState } from "@/lib/server/marketplace-state"
 import { jsonError } from "@/lib/server/http"
 import { getX402AppConfig } from "@/lib/x402/config"
-import { createX402PaymentHandler } from "@/lib/x402/handler"
-import {
-  assertUnlockAcceptedMatchesConfig,
-  parsePaymentSignatureAccepted,
-} from "@/lib/x402/validate-unlock-accepted"
+
+/** Pro: up to 60s; Hobby: cap at 10s in dashboard — payment path needs facilitator + RPC. */
+export const maxDuration = 30
 
 export const runtime = "nodejs"
 
@@ -50,7 +47,14 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const x402 = createX402PaymentHandler()
+  const [{ safeBase64Encode }, { createX402PaymentHandler }, { assertUnlockAcceptedMatchesConfig, parsePaymentSignatureAccepted }] =
+    await Promise.all([
+      import("@payai/x402/utils"),
+      import("@/lib/x402/handler"),
+      import("@/lib/x402/validate-unlock-accepted"),
+    ])
+
+  const x402 = await createX402PaymentHandler()
   const paymentHeader = x402.extractPayment(request.headers)
 
   if (!paymentHeader) {
