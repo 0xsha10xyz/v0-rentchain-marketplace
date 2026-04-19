@@ -14,9 +14,10 @@ const nextConfig = {
   transpilePackages: [
     "x402-solana",
     "@solana/wallet-adapter-base",
+    "@solana/wallet-adapter-phantom",
     "@solana/wallet-adapter-react",
     "@solana/wallet-adapter-react-ui",
-    "@solana/wallet-adapter-wallets",
+    "@solana/wallet-adapter-solflare",
   ],
   webpack: (config) => {
     // WalletConnect/ws optional native deps are sometimes resolved to a nested path that
