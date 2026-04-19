@@ -2,15 +2,6 @@ diff --git a/node_modules/x402-solana/dist/client/index.js b/node_modules/x402-s
 index 917ab69..ca67c15 100644
 --- a/node_modules/x402-solana/dist/client/index.js
 +++ b/node_modules/x402-solana/dist/client/index.js
-@@ -54,7 +54,7 @@ function getDefaultRpcUrl(network) {
-   }
-   return "https://api.devnet.solana.com";
- }
--var DEFAULT_COMPUTE_UNIT_LIMIT = 2e4;
-+var DEFAULT_COMPUTE_UNIT_LIMIT = 2e5;
- var DEFAULT_COMPUTE_UNIT_PRICE_MICROLAMPORTS = 1;
- async function createSolanaPaymentTransaction(wallet, paymentRequirements, rpcUrl) {
-   const connection = new web3_js.Connection(rpcUrl, "confirmed");
 @@ -115,8 +115,13 @@ async function createSolanaPaymentTransaction(wallet, paymentRequirements, rpcUr
      "confirmed"
    );
@@ -39,15 +30,6 @@ index aba8da8..ea881a7 100644
  
  // src/types/x402-protocol.ts
  var SOLANA_MAINNET_CAIP2 = "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp";
-@@ -52,7 +52,7 @@ function getDefaultRpcUrl(network) {
-   }
-   return "https://api.devnet.solana.com";
- }
--var DEFAULT_COMPUTE_UNIT_LIMIT = 2e4;
-+var DEFAULT_COMPUTE_UNIT_LIMIT = 2e5;
- var DEFAULT_COMPUTE_UNIT_PRICE_MICROLAMPORTS = 1;
- async function createSolanaPaymentTransaction(wallet, paymentRequirements, rpcUrl) {
-   const connection = new Connection(rpcUrl, "confirmed");
 @@ -113,8 +113,13 @@ async function createSolanaPaymentTransaction(wallet, paymentRequirements, rpcUr
      "confirmed"
    );

@@ -1,5 +1,5 @@
 {
-  "name": "rentchain-monorepo",
+  "name": "rentchain",
   "private": true,
   "scripts": {
     "dev:frontend": "npm --prefix frontend run dev -- --webpack",

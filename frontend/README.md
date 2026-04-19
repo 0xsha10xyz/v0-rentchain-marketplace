@@ -1,6 +1,6 @@
-# v0-rentchain-marketplace
+# RentChain (marketplace)
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [v0](https://v0.app).
+This is a [Next.js](https://nextjs.org) project bootstrapped with [v0](https://v0.app). The npm/Vercel project name is **rentchain** (see root and `frontend/package.json`).
 
 ## Built with v0
 

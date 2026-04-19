@@ -1,4 +1,6 @@
-# RentChain (Monorepo)
+# RentChain (monorepo)
+
+Canonical name: **rentchain** (matches [Vercel](https://vercel.com) project and `package.json`). The GitHub repository may still be named `v0-rentchain-marketplace` until you rename it under repository settings.
 
 This repository is organized into two top-level folders:
 
