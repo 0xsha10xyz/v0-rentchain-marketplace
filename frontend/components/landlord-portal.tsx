@@ -48,6 +48,35 @@ const durationOptions = [
   { days: 30, label: "30 Hari", price: "4 USDC" },
 ]
 
+/** Map Zod `createPropertyBodySchema` keys to local form field keys */
+function mapListingFieldErrors(fieldErrors: Record<string, string[]>): Record<string, string> {
+  const out: Record<string, string> = {}
+  const take = (schemaKey: string, formKey: string) => {
+    const msg = fieldErrors[schemaKey]?.[0]
+    if (msg) out[formKey] = msg
+  }
+  take("type", "propertyType")
+  take("size", "size")
+  take("price", "price")
+  take("facilities", "facilities")
+  take("fullAddress", "address")
+  take("whatsapp", "whatsapp")
+  return out
+}
+
+function parseListingApiError(payload: unknown): { fields: Record<string, string>; summary?: string } {
+  if (!payload || typeof payload !== "object") return { fields: {} }
+  const err = (payload as { error?: { message?: string; details?: { fieldErrors?: Record<string, string[]> } } }).error
+  if (!err) return { fields: {} }
+  const raw = err.details?.fieldErrors
+  const fieldErrors =
+    raw && typeof raw === "object" ? (raw as Record<string, string[]>) : undefined
+  const fields = fieldErrors ? mapListingFieldErrors(fieldErrors) : {}
+  const summary =
+    typeof err.message === "string" && Object.keys(fields).length === 0 ? err.message : undefined
+  return { fields, summary }
+}
+
 type FormStep = "form" | "processing" | "success"
 
 export function LandlordPortal({ t }: LandlordPortalProps) {
@@ -72,8 +101,11 @@ export function LandlordPortal({ t }: LandlordPortalProps) {
     if (!propertyType) errs.propertyType = "Pilih tipe properti"
     if (!size) errs.size = "Masukkan ukuran"
     if (!price) errs.price = "Masukkan harga sewa"
-    if (!address) errs.address = "Masukkan alamat lengkap"
-    if (!whatsapp) errs.whatsapp = "Masukkan nomor WhatsApp"
+    const addr = address.trim()
+    if (!addr) errs.address = "Masukkan alamat lengkap"
+    else if (addr.length < 3) errs.address = "Alamat minimal 3 karakter"
+    if (!whatsapp.trim()) errs.whatsapp = "Masukkan nomor WhatsApp"
+    else if (whatsapp.trim().length < 8) errs.whatsapp = "Nomor minimal 8 digit/karakter"
     return errs
   }
 
@@ -96,18 +128,25 @@ export function LandlordPortal({ t }: LandlordPortalProps) {
           size: Number(size),
           price: Number(price),
           facilities,
-          fullAddress: address,
-          whatsapp,
+          fullAddress: address.trim(),
+          whatsapp: whatsapp.trim(),
         }),
       })
       const payload: unknown = await res.json().catch(() => null)
       if (!res.ok) {
-        const raw =
-          payload && typeof payload === "object" && "error" in payload
-            ? (payload as { error?: { message?: unknown } }).error?.message
-            : undefined
-        const message = typeof raw === "string" ? raw : undefined
-        throw new Error(message ?? "Gagal menayangkan iklan")
+        setStep("form")
+        const { fields, summary } = parseListingApiError(payload)
+        if (Object.keys(fields).length > 0) {
+          setErrors({ ...fields, ...(summary ? { submit: summary } : {}) })
+        } else {
+          const raw =
+            payload && typeof payload === "object" && "error" in payload
+              ? (payload as { error?: { message?: unknown } }).error?.message
+              : undefined
+          const message = typeof raw === "string" ? raw : "Gagal menayangkan iklan"
+          setErrors({ submit: message })
+        }
+        return
       }
       setStep("success")
     } catch (err) {
