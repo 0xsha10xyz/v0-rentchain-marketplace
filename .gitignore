@@ -9,9 +9,14 @@ next.user-config.*
 
 # Environment variables (never commit real secrets)
 .env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
 .env*.local
 *.pem
 *.p12
+*.key
 
 # Common ignores
 node_modules
